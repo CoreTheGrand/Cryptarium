@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Cryptarium - A Puzzle in Three Acts</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Space Mono', monospace;
+        background: #0a0a0f;
+        color: #e8e8f0;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 {
+        font-family: 'Cinzel', serif;
+    }
+
+    /* Animated starfield background */
+    #particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .particle {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        animation: twinkle 4s infinite;
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    @keyframes glow-pulse {
+        0%, 100% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
+        50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor; }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes letterReveal {
+        0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+        50% { transform: scale(1.2) rotate(10deg); }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .glass-card {
+        background: rgba(15, 15, 25, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5),
+                    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .page {
+        display: none;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .page.active {
+        display: block;
+    }
+
+    .glow-cyan {
+        color: #00d4ff;
+        text-shadow: 0 0 15px rgba(0, 212, 255, 0.8), 0 0 30px rgba(0, 212, 255, 0.4);
+    }
+
+    .glow-amber {
+        color: #ff6b35;
+        text-shadow: 0 0 15px rgba(255, 107, 53, 0.8), 0 0 30px rgba(255, 107, 53, 0.4);
+    }
+
+    .glow-purple {
+        color: #a855f7;
+        text-shadow: 0 0 15px rgba(168, 85, 247, 0.8), 0 0 30px rgba(168, 85, 247, 0.4);
+    }
+
+    .chamber-card {
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: pointer;
+    }
+
+    .chamber-card:hover {
+        transform: scale(1.05) translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px currentColor;
+    }
+
+    .btn-primary {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn-primary:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.4);
+    }
+
+    /* Invisible ink effect */
+    .invisible-ink {
+        color: #0a0a0f;
+        user-select: text;
+        transition: color 0.3s;
+    }
+
+    .invisible-ink::selection {
+        background: rgba(0, 212, 255, 0.3);
+        color: #00d4ff;
+        text-shadow: 0 0 10px #00d4ff;
+    }
+
+    .invisible-ink.amber::selection {
+        background: rgba(255, 107, 53, 0.3);
+        color: #ff6b35;
+        text-shadow: 0 0 10px #ff6b35;
+    }
+
+    .invisible-ink.purple::selection {
+        background: rgba(168, 85, 247, 0.3);
+        color: #a855f7;
+        text-shadow: 0 0 10px #a855f7;
+    }
+
+    .cipher-box {
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid;
+        animation: glow-pulse 3s infinite;
+    }
+
+    input[type="text"] {
+        background: rgba(15, 15, 25, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+    }
+
+    input[type="text"]:focus {
+        outline: none;
+        border-color: currentColor;
+        box-shadow: 0 0 20px currentColor;
+    }
+
+    .letter-box {
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        font-weight: 700;
+        font-family: 'Cinzel', serif;
+        background: rgba(15, 15, 25, 0.8);
+        border: 3px solid;
+        animation: letterReveal 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+
+    .nav-btn {
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .nav-btn:hover {
+        color: #00d4ff;
+        text-shadow: 0 0 10px #00d4ff;
+        transform: translateY(-2px);
+    }
+
+    .nav-btn.active {
+        color: #00d4ff;
+        text-shadow: 0 0 15px #00d4ff;
+    }
+
+    .tree-btn {
+        transition: all 0.3s;
+    }
+
+    .tree-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 30px #a855f7;
+    }
+
+    .tree-btn.active {
+        background: rgba(168, 85, 247, 0.2);
+        border-color: #a855f7;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+    }
+
+    @media (max-width: 768px) {
+        .letter-box {
+            width: 80px;
+            height: 80px;
+            font-size: 2.5rem;
+        }
+    }
+</style>
+</head>
+<body>
+<div id="particles"></div>
+
+<div class="relative z-10 min-h-screen">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/10">
+        <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="text-2xl font-bold tracking-wider" style="font-family: 'Cinzel', serif;">
+                <span class="glow-cyan">THE CRYPTARIUM</span>
+            </div>
+            <div class="flex gap-8 text-sm tracking-widest">
+                <button class="nav-btn active" onclick="showPage('atrium')">ATRIUM</button>
+                <button class="nav-btn" onclick="showPage('chamber1')">I</button>
+                <button class="nav-btn" onclick="showPage('chamber2')">II</button>
+                <button class="nav-btn" onclick="showPage('chamber3')">III</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-[1400px] mx-auto px-6 pt-24 pb-12">
+        
+        <!-- ATRIUM / LANDING PAGE -->
+        <div id="atrium" class="page active">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center text-center">
+                <div class="mb-8 animate-[float_6s_ease-in-out_infinite]">
+                    <h1 class="text-8xl md:text-9xl font-black mb-4 glow-cyan" style="font-family: 'Cinzel', serif; letter-spacing: 0.05em;">
+                        Cryptarium
+                    </h1>
+                    <p class="text-xl md:text-2xl tracking-[0.3em] text-gray-400 mb-12">
+                        A PUZZLE IN THREE ACTS
+                    </p>
+                </div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl mb-12">
+                    <p class="text-lg leading-relaxed text-gray-300 mb-6">
+                        Three chambers lie before you, each holding a secret. Each secret, a fragment of the truth.
+                    </p>
+                    <p class="text-lg leading-relaxed text-gray-300 mb-6">
+                        Through tide and flame and root, the path reveals itself to those who see beyond the veil.
+                    </p>
+                    <p class="text-lg leading-relaxed text-gray-300">
+                        Gather the letters. Speak the word. Open the door.
+                    </p>
+                </div>
+
+                <button onclick="showPage('chamber1')" class="btn-primary glass-card px-12 py-5 rounded-xl text-xl font-semibold tracking-wider text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 relative z-10">
+                    ENTER THE FIRST CHAMBER →
+                </button>
+
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+                    <div onclick="showPage('chamber1')" class="chamber-card glass-card rounded-xl p-8 text-cyan-400 border border-cyan-400/30">
+                        <div class="text-6xl mb-4">🌊</div>
+                        <h3 class="text-2xl font-bold mb-2" style="font-family: 'Cinzel', serif;">01 The Tide</h3>
+                        <p class="text-sm text-gray-400">A Riddle from the Deep</p>
+                    </div>
+                    <div onclick="showPage('chamber2')" class="chamber-card glass-card rounded-xl p-8 text-amber-500 border border-amber-500/30">
+                        <div class="text-6xl mb-4">🔥</div>
+                        <h3 class="text-2xl font-bold mb-2" style="font-family: 'Cinzel', serif;">02 The Forge</h3>
+                        <p class="text-sm text-gray-400">A Cipher in the Coals</p>
+                    </div>
+                    <div onclick="showPage('chamber3')" class="chamber-card glass-card rounded-xl p-8 text-purple-500 border border-purple-500/30">
+                        <div class="text-6xl mb-4">🌳</div>
+                        <h3 class="text-2xl font-bold mb-2" style="font-family: 'Cinzel', serif;">03 The Grove</h3>
+                        <p class="text-sm text-gray-400">Fragments Among the Roots</p>
+                    </div>
+                </div>
+
+                <div class="mt-16 text-center">
+                    <p class="invisible-ink text-xs tracking-widest">
+                        In the wrong place go looking.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAMBER I: THE TIDE -->
+        <div id="chamber1" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-6xl md:text-7xl font-bold mb-4 glow-cyan" style="font-family: 'Cinzel', serif;">
+                    A Riddle from the Deep
+                </h2>
+                <div class="w-32 h-1 bg-cyan-400 mx-auto mb-12 shadow-[0_0_20px_#00d4ff]"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full mb-8">
+                    <div class="text-xl md:text-2xl leading-relaxed text-gray-200 italic space-y-4 mb-8">
+                        <p>I guard the depths where light dare not.</p>
+                        <p>My arms are many; my heart is not.</p>
+                        <p>Sailors fear my waking wrath,</p>
+                        <p>Yet scholars name me a legend's path.</p>
+                        <p>I drag down hulls with tentacled might—</p>
+                        <p>What am I, terror of the night?</p>
+                    </div>
+
+                    <div class="border-t border-white/10 pt-6 mb-6">
+                        <button onclick="showPage('bestiary')" class="text-cyan-400 hover:text-cyan-300 transition flex items-center gap-2 text-sm tracking-wider">
+                            📖 CONSULT THE BESTIARY →
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            id="chamber1-input" 
+                            placeholder="Speak the answer..."
+                            class="text-cyan-400 px-6 py-4 rounded-lg text-xl text-center uppercase tracking-widest"
+                            onkeypress="if(event.key === 'Enter') checkChamber1()"
+                        >
+                        <button onclick="checkChamber1()" class="btn-primary glass-card px-8 py-4 rounded-lg text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 font-semibold tracking-wider">
+                            SUBMIT
+                        </button>
+                    </div>
+
+                    <div id="chamber1-result" class="mt-6 text-center hidden">
+                        <div class="inline-block">
+                            <p class="text-cyan-400 text-lg mb-4">First letter revealed:</p>
+                            <div class="letter-box border-cyan-400 text-cyan-400 shadow-[0_0_30px_#00d4ff]">K</div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="invisible-ink text-xs tracking-widest mt-8">
+                    In the wrong place go looking.
+                </p>
+            </div>
+        </div>
+
+        <!-- BESTIARY PAGE -->
+        <div id="bestiary" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-5xl md:text-6xl font-bold mb-4 text-cyan-400" style="font-family: 'Cinzel', serif;">
+                    The Mariner's Bestiary
+                </h2>
+                <div class="w-32 h-1 bg-cyan-400 mx-auto mb-12"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-4xl w-full">
+                    <div class="space-y-6 text-lg">
+                        <div class="border-l-4 border-gray-600 pl-6 py-2 hover:border-cyan-400 transition">
+                            <h3 class="text-xl font-bold text-gray-300 mb-1" style="font-family: 'Cinzel', serif;">Leviathan</h3>
+                            <p class="text-gray-400 text-sm">The great serpent of the abyss, said to encircle the world.</p>
+                        </div>
+                        <div class="border-l-4 border-gray-600 pl-6 py-2 hover:border-cyan-400 transition">
+                            <h3 class="text-xl font-bold text-gray-300 mb-1" style="font-family: 'Cinzel', serif;">Siren</h3>
+                            <p class="text-gray-400 text-sm">Masters of song who lure ships to jagged rocks.</p>
+                        </div>
+                        <div class="border-l-4 border-cyan-400 pl-6 py-2 bg-cyan-400/10 shadow-[0_0_20px_rgba(0,212,255,0.3)]">
+                            <h3 class="text-xl font-bold text-cyan-400 mb-1 glow-cyan" style="font-family: 'Cinzel', serif;">Kraken</h3>
+                            <p class="text-gray-300 text-sm">The many-armed terror of the deep. Its tentacles can snap masts and drag entire vessels into the black.</p>
+                        </div>
+                        <div class="border-l-4 border-gray-600 pl-6 py-2 hover:border-cyan-400 transition">
+                            <h3 class="text-xl font-bold text-gray-300 mb-1" style="font-family: 'Cinzel', serif;">Charybdis</h3>
+                            <p class="text-gray-400 text-sm">The great whirlpool, mouth of the sea itself.</p>
+                        </div>
+                        <div class="border-l-4 border-gray-600 pl-6 py-2 hover:border-cyan-400 transition">
+                            <h3 class="text-xl font-bold text-gray-300 mb-1" style="font-family: 'Cinzel', serif;">Merrow</h3>
+                            <p class="text-gray-400 text-sm">Sea-folk who dwell in coral palaces beneath the waves.</p>
+                        </div>
+                    </div>
+
+                    <button onclick="showPage('chamber1')" class="mt-8 text-cyan-400 hover:text-cyan-300 transition">
+                        ← RETURN TO THE RIDDLE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAMBER II: THE FORGE -->
+        <div id="chamber2" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-6xl md:text-7xl font-bold mb-4 glow-amber" style="font-family: 'Cinzel', serif;">
+                    A Cipher in the Coals
+                </h2>
+                <div class="w-32 h-1 bg-amber-500 mx-auto mb-12 shadow-[0_0_20px_#ff6b35]"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full mb-8">
+                    <div class="cipher-box border-amber-500 rounded-xl p-12 mb-8 text-center">
+                        <div class="text-6xl md:text-8xl font-bold text-amber-500 tracking-[0.5em] glow-amber" style="font-family: 'Cinzel', serif;">
+                            JRGJW
+                        </div>
+                    </div>
+
+                    <div class="border-t border-white/10 pt-6 mb-6">
+                        <button onclick="showPage('forgelog')" class="text-amber-500 hover:text-amber-400 transition flex items-center gap-2 text-sm tracking-wider">
+                            🔥 EXAMINE THE FORGE LOG →
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            id="chamber2-input" 
+                            placeholder="Decipher the code..."
+                            class="text-amber-500 px-6 py-4 rounded-lg text-xl text-center uppercase tracking-widest"
+                            onkeypress="if(event.key === 'Enter') checkChamber2()"
+                        >
+                        <button onclick="checkChamber2()" class="btn-primary glass-card px-8 py-4 rounded-lg text-amber-500 border-2 border-amber-500/50 hover:border-amber-500 font-semibold tracking-wider">
+                            SUBMIT
+                        </button>
+                    </div>
+
+                    <div id="chamber2-result" class="mt-6 text-center hidden">
+                        <div class="inline-block">
+                            <p class="text-amber-500 text-lg mb-4">Second letter revealed:</p>
+                            <div class="letter-box border-amber-500 text-amber-500 shadow-[0_0_30px_#ff6b35]">E</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/10">
+                        <p class="invisible-ink amber text-xs tracking-widest text-center">
+                            In the wrong place go looking.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORGE LOG PAGE -->
+        <div id="forgelog" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-5xl md:text-6xl font-bold mb-4 text-amber-500" style="font-family: 'Cinzel', serif;">
+                    The Forge Master's Log
+                </h2>
+                <div class="w-32 h-1 bg-amber-500 mx-auto mb-12"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-4xl w-full">
+                    <div class="space-y-6 font-mono text-sm text-gray-300">
+                        <div class="border-l-4 border-amber-500/50 pl-6 py-3">
+                            <p class="text-amber-400 text-xs mb-1">First Fire - Dawn Shift</p>
+                            <p>The great bellows roared to life. BLAZE was our call, and BLAZE it became.</p>
+                        </div>
+                        <div class="border-l-4 border-amber-500/50 pl-6 py-3">
+                            <p class="text-amber-400 text-xs mb-1">Second Fire - Midday</p>
+                            <p>HEAT, we cried, as the ingots melted like butter.</p>
+                        </div>
+                        <div class="border-l-4 border-amber-500/50 pl-6 py-3">
+                            <p class="text-amber-400 text-xs mb-1">Third Fire - Evening</p>
+                            <p>Through GLOW of ember and ash, we tempered the steel.</p>
+                        </div>
+                        <div class="border-l-4 border-amber-500/50 pl-6 py-3">
+                            <p class="text-amber-400 text-xs mb-1">Fourth Fire - Midnight</p>
+                            <p>FLAME danced across the ceiling as we quenched the blades.</p>
+                        </div>
+                        <div class="border-l-4 border-amber-500/50 pl-6 py-3">
+                            <p class="text-amber-400 text-xs mb-1">Fifth Fire - Deep Night</p>
+                            <p>Only COAL remains now, cold and silent.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/10">
+                        <p class="invisible-ink amber text-xs tracking-widest">
+                            In the wrong place go looking.
+                        </p>
+                    </div>
+
+                    <button onclick="showPage('chamber2')" class="mt-8 text-amber-500 hover:text-amber-400 transition">
+                        ← RETURN TO THE CIPHER
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAMBER III: THE GROVE -->
+        <div id="chamber3" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-6xl md:text-7xl font-bold mb-4 glow-purple" style="font-family: 'Cinzel', serif;">
+                    Fragments Among the Roots
+                </h2>
+                <div class="w-32 h-1 bg-purple-500 mx-auto mb-12 shadow-[0_0_20px_#a855f7]"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-4xl w-full mb-8">
+                    <p class="text-lg text-gray-300 mb-8 text-center">
+                        Three ancient trees stand before you. Each holds a fragment of knowledge.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <button onclick="showTreePage('yew')" class="tree-btn glass-card border-2 border-white/10 rounded-xl p-6 text-center">
+                            <div class="text-5xl mb-3">🌲</div>
+                            <h3 class="text-xl font-bold text-purple-400" style="font-family: 'Cinzel', serif;">Yew Tree</h3>
+                        </button>
+                        <button onclick="showTreePage('elder')" class="tree-btn glass-card border-2 border-white/10 rounded-xl p-6 text-center">
+                            <div class="text-5xl mb-3">🌿</div>
+                            <h3 class="text-xl font-bold text-purple-400" style="font-family: 'Cinzel', serif;">Elder Tree</h3>
+                        </button>
+                        <button onclick="showTreePage('willow')" class="tree-btn glass-card border-2 border-white/10 rounded-xl p-6 text-center">
+                            <div class="text-5xl mb-3">🌳</div>
+                            <h3 class="text-xl font-bold text-purple-400" style="font-family: 'Cinzel', serif;">Willow Tree</h3>
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            id="chamber3-input" 
+                            placeholder="Name the tree..."
+                            class="text-purple-500 px-6 py-4 rounded-lg text-xl text-center uppercase tracking-widest"
+                            onkeypress="if(event.key === 'Enter') checkChamber3()"
+                        >
+                        <button onclick="checkChamber3()" class="btn-primary glass-card px-8 py-4 rounded-lg text-purple-500 border-2 border-purple-500/50 hover:border-purple-500 font-semibold tracking-wider">
+                            SUBMIT
+                        </button>
+                    </div>
+
+                    <div id="chamber3-result" class="mt-6 text-center hidden">
+                        <div class="inline-block">
+                            <p class="text-purple-500 text-lg mb-4">Third letter revealed:</p>
+                            <div class="letter-box border-purple-500 text-purple-500 shadow-[0_0_30px_#a855f7]">Y</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/10">
+                        <p class="invisible-ink purple text-xs tracking-widest text-center">
+                            In the wrong place go looking.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TREE PAGES -->
+        <div id="tree-yew" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-5xl md:text-6xl font-bold mb-4 text-purple-500" style="font-family: 'Cinzel', serif;">
+                    The Yew Tree
+                </h2>
+                <div class="w-32 h-1 bg-purple-500 mx-auto mb-12"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full">
+                    <div class="text-8xl mb-8 text-center">🌲</div>
+                    <p class="text-xl leading-relaxed text-gray-300 mb-8 text-center italic">
+                        "Ancient and dark, I mark the boundary between worlds. My berries red as blood, my needles sharp as thorns. I have watched empires rise and fall from my roots."
+                    </p>
+                    <p class="text-gray-400 text-center mb-8">
+                        The oldest of the grove, guardian of secrets long forgotten.
+                    </p>
+                    <button onclick="showPage('chamber3')" class="text-purple-400 hover:text-purple-300 transition">
+                        ← RETURN TO THE GROVE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tree-elder" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-5xl md:text-6xl font-bold mb-4 text-purple-500" style="font-family: 'Cinzel', serif;">
+                    The Elder Tree
+                </h2>
+                <div class="w-32 h-1 bg-purple-500 mx-auto mb-12"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full">
+                    <div class="text-8xl mb-8 text-center">🌿</div>
+                    <p class="text-xl leading-relaxed text-gray-300 mb-8 text-center italic">
+                        "My branches bear the offerings of the fae. White flowers in spring, purple berries in autumn. I am the doorway, but not the key."
+                    </p>
+                    <p class="text-gray-400 text-center mb-8">
+                        A tree of transition, honored by those who walk between realms.
+                    </p>
+                    <button onclick="showPage('chamber3')" class="text-purple-400 hover:text-purple-300 transition">
+                        ← RETURN TO THE GROVE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tree-willow" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-5xl md:text-6xl font-bold mb-4 text-purple-500" style="font-family: 'Cinzel', serif;">
+                    The Willow Tree
+                </h2>
+                <div class="w-32 h-1 bg-purple-500 mx-auto mb-12"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full">
+                    <div class="text-8xl mb-8 text-center">🌳</div>
+                    <p class="text-xl leading-relaxed text-gray-300 mb-8 text-center italic">
+                        "I weep beside the waters, my branches trailing sorrow. Yet in my grief grows wisdom, and in my bark, the cure for pain."
+                    </p>
+                    <p class="text-gray-400 text-center mb-8">
+                        Keeper of healing, mourner of the lost.
+                    </p>
+                    <button onclick="showPage('chamber3')" class="text-purple-400 hover:text-purple-300 transition">
+                        ← RETURN TO THE GROVE
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINAL DOOR -->
+        <div id="finaldoor" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <h2 class="text-6xl md:text-7xl font-bold mb-6 text-white" style="font-family: 'Cinzel', serif; text-shadow: 0 0 30px rgba(255,255,255,0.8);">
+                    Three Letters, One Word
+                </h2>
+                <div class="w-32 h-1 bg-white mx-auto mb-12 shadow-[0_0_20px_rgba(255,255,255,0.8)]"></div>
+
+                <div class="glass-card rounded-2xl p-8 md:p-12 max-w-3xl w-full mb-8">
+                    <div class="flex justify-center gap-4 md:gap-8 mb-12">
+                        <div id="letter-k" class="glass-card rounded-xl w-24 h-24 md:w-32 md:h-32 flex items-center justify-center text-4xl md:text-6xl font-bold border-2 border-gray-600" style="font-family: 'Cinzel', serif;">
+                            ?
+                        </div>
+                        <div id="letter-e" class="glass-card rounded-xl w-24 h-24 md:w-32 md:h-32 flex items-center justify-center text-4xl md:text-6xl font-bold border-2 border-gray-600" style="font-family: 'Cinzel', serif;">
+                            ?
+                        </div>
+                        <div id="letter-y" class="glass-card rounded-xl w-24 h-24 md:w-32 md:h-32 flex items-center justify-center text-4xl md:text-6xl font-bold border-2 border-gray-600" style="font-family: 'Cinzel', serif;">
+                            ?
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            id="final-input" 
+                            placeholder="Speak the word to open the door..."
+                            class="text-white px-6 py-4 rounded-lg text-xl text-center uppercase tracking-widest"
+                            onkeypress="if(event.key === 'Enter') checkFinal()"
+                        >
+                        <button onclick="checkFinal()" class="btn-primary glass-card px-8 py-4 rounded-lg text-white border-2 border-white/50 hover:border-white font-semibold tracking-wider">
+                            UNLOCK
+                        </button>
+                    </div>
+
+                    <div id="final-reward" class="mt-12 text-center hidden">
+                        <div class="mb-8">
+                            <p class="text-3xl md:text-5xl font-bold mb-6 text-white" style="font-family: 'Cinzel', serif; text-shadow: 0 0 40px rgba(255,255,255,0.9);">
+                                THE DOOR OPENS
+                            </p>
+                            <div class="text-9xl mb-6 animate-[float_3s_ease-in-out_infinite]" style="text-shadow: 0 0 60px rgba(255,255,255,0.8);">
+                                🗝️
+                            </div>
+                            <p class="text-6xl md:text-8xl font-bold mb-8 glow-cyan" style="font-family: 'Cinzel', serif;">
+                                KEY
+                            </p>
+                        </div>
+                        <div class="glass-card rounded-xl p-8 border-2 border-white/20">
+                            <p class="text-lg md:text-xl text-gray-300 italic leading-relaxed">
+                                "Through the tide you swam, through the forge you burned, through the grove you wandered. The answer was always within you."
+                            </p>
+                        </div>
+                        <button onclick="showPage('credits')" class="mt-8 btn-primary glass-card px-8 py-4 rounded-lg text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 font-semibold tracking-wider">
+                            CONTINUE →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CREDITS SLIDE -->
+        <div id="credits" class="page">
+            <div class="min-h-[calc(100vh-8rem)] flex flex-col items-center justify-center py-12">
+                <div class="text-center">
+                    <h2 class="text-5xl md:text-7xl font-bold mb-8 glow-cyan animate-[glow-pulse_3s_infinite]" style="font-family: 'Cinzel', serif;">
+                        Made by CoreTheGrand and suggested by Peanut the man
+                    </h2>
+                    <button onclick="showPage('atrium')" class="mt-12 btn-primary glass-card px-12 py-5 rounded-xl text-xl font-semibold tracking-wider text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400">
+                        — RETURN TO THE ATRIUM
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // Initialize particle background
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        const particleCount = 100;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 3 + 1 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 4 + 's';
+            particle.style.animationDuration = Math.random() * 3 + 2 + 's';
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Game state
+    let gameState = {
+        chamber1Complete: false,
+        chamber2Complete: false,
+        chamber3Complete: false,
+        currentPage: 'atrium'
+    };
+
+    // Load progress from localStorage
+    function loadProgress() {
+        const saved = localStorage.getItem('cryptariumProgress');
+        if (saved) {
+            gameState = JSON.parse(saved);
+            updateUI();
+        }
+    }
+
+    // Save progress to localStorage
+    function saveProgress() {
+        localStorage.setItem('cryptariumProgress', JSON.stringify(gameState));
+    }
+
+    // Update UI based on state
+    function updateUI() {
+        if (gameState.chamber1Complete) {
+            document.getElementById('chamber1-result').classList.remove('hidden');
+            document.getElementById('letter-k').textContent = 'K';
+            document.getElementById('letter-k').classList.add('border-cyan-400', 'text-cyan-400', 'shadow-[0_0_30px_#00d4ff]');
+        }
+        if (gameState.chamber2Complete) {
+            document.getElementById('chamber2-result').classList.remove('hidden');
+            document.getElementById('letter-e').textContent = 'E';
+            document.getElementById('letter-e').classList.add('border-amber-500', 'text-amber-500', 'shadow-[0_0_30px_#ff6b35]');
+        }
+        if (gameState.chamber3Complete) {
+            document.getElementById('chamber3-result').classList.remove('hidden');
+            document.getElementById('letter-y').textContent = 'Y';
+            document.getElementById('letter-y').classList.add('border-purple-500', 'text-purple-500', 'shadow-[0_0_30px_#a855f7]');
+        }
+    }
+
+    // Page navigation
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        document.getElementById(pageId).classList.add('active');
+        
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        gameState.currentPage = pageId;
+        saveProgress();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        
+        if (pageId === 'finaldoor') {
+            updateFinalDoor();
+        }
+    }
+
+    function showTreePage(tree) {
+        showPage('tree-' + tree);
+    }
+
+    function updateFinalDoor() {
+        if (gameState.chamber1Complete) {
+            document.getElementById('letter-k').textContent = 'K';
+            document.getElementById('letter-k').classList.add('border-cyan-400', 'text-cyan-400', 'shadow-[0_0_30px_#00d4ff]');
+        }
+        if (gameState.chamber2Complete) {
+            document.getElementById('letter-e').textContent = 'E';
+            document.getElementById('letter-e').classList.add('border-amber-500', 'text-amber-500', 'shadow-[0_0_30px_#ff6b35]');
+        }
+        if (gameState.chamber3Complete) {
+            document.getElementById('letter-y').textContent = 'Y';
+            document.getElementById('letter-y').classList.add('border-purple-500', 'text-purple-500', 'shadow-[0_0_30px_#a855f7]');
+        }
+    }
+
+    // Chamber 1: KRAKEN
+    function checkChamber1() {
+        const input = document.getElementById('chamber1-input').value.trim().toUpperCase();
+        if (input === 'KRAKEN') {
+            gameState.chamber1Complete = true;
+            saveProgress();
+            document.getElementById('chamber1-result').classList.remove('hidden');
+            updateUI();
+            setTimeout(() => {
+                showPage('chamber2');
+            }, 2000);
+        } else {
+            shakeElement('chamber1-input');
+        }
+    }
+
+    // Chamber 2: EMBER (JRGJW is EMBER shifted by -5, Caesar cipher)
+    // B=first fire, H=second, G=third, F=fourth, C=fifth -> "In the wrong place go looking" suggests using FIFTH fire COAL
+    // But the video cipher JRGJW decodes to EMBER with shift of -5 or +21
+    function checkChamber2() {
+        const input = document.getElementById('chamber2-input').value.trim().toUpperCase();
+        if (input === 'EMBER') {
+            gameState.chamber2Complete = true;
+            saveProgress();
+            document.getElementById('chamber2-result').classList.remove('hidden');
+            updateUI();
+            setTimeout(() => {
+                showPage('chamber3');
+            }, 2000);
+        } else {
+            shakeElement('chamber2-input');
+        }
+    }
+
+    // Chamber 3: YEW
+    function checkChamber3() {
+        const input = document.getElementById('chamber3-input').value.trim().toUpperCase();
+        if (input === 'YEW') {
+            gameState.chamber3Complete = true;
+            saveProgress();
+            document.getElementById('chamber3-result').classList.remove('hidden');
+            updateUI();
+            setTimeout(() => {
+                showPage('finaldoor');
+            }, 2000);
+        } else {
+            shakeElement('chamber3-input');
+        }
+    }
+
+    // Final check: KEY
+    function checkFinal() {
+        const input = document.getElementById('final-input').value.trim().toUpperCase();
+        if (input === 'KEY' && gameState.chamber1Complete && gameState.chamber2Complete && gameState.chamber3Complete) {
+            document.getElementById('final-reward').classList.remove('hidden');
+        } else if (input === 'KEY') {
+            alert('You must complete all three chambers first!');
+        } else {
+            shakeElement('final-input');
+        }
+    }
+
+    // Shake animation for wrong answers
+    function shakeElement(elementId) {
+        const el = document.getElementById(elementId);
+        el.style.animation = 'none';
+        setTimeout(() => {
+            el.style.animation = 'shake 0.5s';
+        }, 10);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '1') showPage('chamber1');
+        if (e.key === '2') showPage('chamber2');
+        if (e.key === '3') showPage('chamber3');
+    });
+
+    // Add shake animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Initialize
+    createParticles();
+    loadProgress();
+</script>
+</body>
+</html>
